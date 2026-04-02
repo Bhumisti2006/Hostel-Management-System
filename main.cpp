@@ -175,7 +175,7 @@ public:
     }
 };
 
-// ================= MAIN =================
+// ================= MAIN ================
 int main() {
     HostelSystem system;
     system.loadStudents();
