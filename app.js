@@ -33,6 +33,9 @@ const rooms = [
   { room:"107", members:["Rahul2","Aman"]          },
 ];
 
+/* ── NOTICE BOARD DATA (in-memory, mirrors C++ NoticeBoard) ── */
+const noticeBoard = [];
+
 /* ── HELPERS ───────────────────────────────────────────────── */
 
 const AV_CLASSES = ["av-info","av-green","av-amber","av-red"];
@@ -77,6 +80,13 @@ const ICONS = {
   globe:   `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`,
   sun:     `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>`,
   wind:    `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M12 12c-2-2.5-2-6 0-7s5 .5 5 3c.5 2-2 3.5-5 4z"/><path d="M12 12c2.5 2 6 2 7 0s-.5-5-3-5c-2-.5-3.5 2-4 5z"/><path d="M12 12c2 2.5 2 6 0 7s-5-.5-5-3c-.5-2 2-3.5 5-4z"/><path d="M12 12c-2.5-2-6-2-7 0s.5 5 3 5c2 .5 3.5-2 4-5z"/><circle cx="12" cy="12" r="1.5"/></svg>`,
+  /* ── NEW ICONS ── */
+  edit:    `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`,
+  tool:    `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>`,
+  bell:    `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`,
+  pin:     `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
+  shield:  `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+  trash:   `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>`,
 };
 
 /* ── HTML BUILDERS ─────────────────────────────────────────── */
@@ -122,7 +132,6 @@ function studentTable(list) {
 }
 
 function profileCard(s) {
-  const isPaid = s.fee === "Paid";
   return `
     <div class="profile-card">
       <div class="profile-top">
@@ -300,11 +309,12 @@ function doFeeSearch() {
 /* ── PANEL: COMPLAINTS ─────────────────────────────────────── */
 
 const COMP_CATS = [
-  { id:"elec",  label:"Electricity", sub:"LAN · light · fan issues",   icon: ICONS.bolt,    bg:"var(--amber-dim)",  color:"var(--amber-text)",  border:"var(--amber)"  },
-  { id:"food",  label:"Food",        sub:"Mess quality concerns",       icon: ICONS.fork,    bg:"var(--red-dim)",    color:"var(--red-text)",    border:"var(--red)"    },
-  { id:"hygiene",label:"Hygiene",    sub:"Cleanliness & sanitation",    icon: ICONS.recycle, bg:"var(--green-dim)",  color:"var(--green-text)",  border:"var(--green)"  },
-  { id:"water", label:"Water",       sub:"Supply or quality issues",    icon: ICONS.drop,    bg:"var(--blue-dim)",   color:"var(--blue-text)",   border:"var(--blue)"   },
-  { id:"wash",  label:"Washing",     sub:"Washing machine problems",    icon: ICONS.wash,    bg:"var(--purple-dim)", color:"var(--purple-text)", border:"var(--purple)" },
+  { id:"elec",    label:"Electricity", sub:"LAN · light · fan issues",   icon: ICONS.bolt,    bg:"var(--amber-dim)",  color:"var(--amber-text)",  border:"var(--amber)"  },
+  { id:"food",    label:"Food",        sub:"Mess quality concerns",       icon: ICONS.fork,    bg:"var(--red-dim)",    color:"var(--red-text)",    border:"var(--red)"    },
+  { id:"hygiene", label:"Hygiene",     sub:"Cleanliness & sanitation",    icon: ICONS.recycle, bg:"var(--green-dim)",  color:"var(--green-text)",  border:"var(--green)"  },
+  { id:"water",   label:"Water",       sub:"Supply or quality issues",    icon: ICONS.drop,    bg:"var(--blue-dim)",   color:"var(--blue-text)",   border:"var(--blue)"   },
+  { id:"wash",    label:"Washing",     sub:"Washing machine problems",    icon: ICONS.wash,    bg:"var(--purple-dim)", color:"var(--purple-text)", border:"var(--purple)" },
+  { id:"other",   label:"Others",      sub:"Any other grievance",         icon: ICONS.edit,    bg:"var(--teal-dim)",   color:"var(--teal-text)",   border:"var(--teal)"   },
 ];
 
 function initComplaints() {
@@ -356,6 +366,26 @@ function showCompDetail(id) {
         <div id="flr-res" class="mt-12"></div>
       </div>`;
 
+  } else if (id === "other") {
+    /* ── NEW: Others complaint ── */
+    det.innerHTML = `
+      <div class="detail-card">
+        <h4>Others — describe your complaint</h4>
+        <p style="font-size:13px;color:var(--text3);margin-bottom:14px">
+          Use this section for any issue not listed above. Please be as specific as possible so the administration can act on it quickly.
+        </p>
+        <div style="margin-bottom:10px">
+          <label class="field-mini-label">Category / subject (optional)</label>
+          <input id="other-cat" type="text" placeholder="e.g. Noise disturbance, Broken furniture…" style="width:100%;margin-top:4px">
+        </div>
+        <div style="margin-bottom:14px">
+          <label class="field-mini-label">Description</label>
+          <textarea id="other-desc" rows="4" placeholder="Describe the issue in detail…" style="margin-top:4px"></textarea>
+        </div>
+        <button onclick="submitOtherComplaint(this)">Submit complaint</button>
+        <div id="other-ok"></div>
+      </div>`;
+
   } else {
     const labels = { food:"Food", water:"Water", wash:"Washing machine" };
     det.innerHTML = `
@@ -403,6 +433,192 @@ function submitComplaint(btn) {
   ok.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
+/* ── NEW: Submit "Others" complaint ─────────────────────────── */
+function submitOtherComplaint(btn) {
+  const desc = document.getElementById("other-desc").value.trim();
+  const cat  = document.getElementById("other-cat").value.trim();
+  const ok   = document.getElementById("other-ok");
+
+  if (!desc) {
+    ok.innerHTML = infoBanner("Please describe the issue before submitting.", true);
+    return;
+  }
+
+  btn.disabled = true;
+  ok.innerHTML = `<div class="success-banner">
+    Complaint submitted successfully${cat ? ` under "<strong>${cat}</strong>"` : ""}.
+    The hostel administration will respond within 24 hours.
+  </div>`;
+  ok.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+/* ── PANEL: WARDEN NOTICES (NEW) ───────────────────────────── */
+
+function initNotices() {
+  renderNoticesPanel();
+}
+
+function renderNoticesPanel() {
+  const STAFF_TYPES = ["Electrician","Plumber","Carpenter","Pest Control","Internet Technician","Other"];
+
+  const staffOpts = STAFF_TYPES.map(t => `<option value="${t}">${t}</option>`).join("");
+
+  document.getElementById("p5").innerHTML = `
+    ${pageHeader("Warden Notices", "Post availability of staff & general announcements for students")}
+
+    <!-- POST NOTICE CARD -->
+    <div class="notice-post-card">
+      <div class="notice-post-header">
+        <div class="notice-post-icon">${ICONS.shield}</div>
+        <div>
+          <div style="font-size:14px;font-weight:700;color:var(--text)">Post a Notice</div>
+          <div style="font-size:12px;color:var(--text3)">Warden / Admin only</div>
+        </div>
+      </div>
+
+      <!-- Type tabs -->
+      <div class="notice-tabs" id="notice-tabs">
+        <div class="notice-tab active" onclick="switchNoticeTab('avail')">Staff Availability</div>
+        <div class="notice-tab" onclick="switchNoticeTab('general')">General Notice</div>
+      </div>
+
+      <!-- Staff availability form -->
+      <div id="form-avail" class="notice-form">
+        <div class="notice-form-row">
+          <div style="flex:1">
+            <label class="field-mini-label">Staff type</label>
+            <select id="staff-type" style="width:100%;margin-top:4px">
+              ${staffOpts}
+            </select>
+          </div>
+          <div style="flex:1">
+            <label class="field-mini-label">Available slot</label>
+            <input id="staff-slot" type="text" placeholder="e.g. Monday 10 AM – 12 PM" style="width:100%;margin-top:4px">
+          </div>
+        </div>
+        <div style="margin-top:10px">
+          <label class="field-mini-label">Additional info (optional)</label>
+          <input id="staff-info" type="text" placeholder="e.g. Room no. or contact details" style="width:100%;margin-top:4px">
+        </div>
+        <button class="mt-12" onclick="postStaffNotice()">Post notice</button>
+        <div id="avail-ok"></div>
+      </div>
+
+      <!-- General notice form -->
+      <div id="form-general" class="notice-form" style="display:none">
+        <div>
+          <label class="field-mini-label">Message</label>
+          <textarea id="gen-msg" rows="3" placeholder="Write the announcement here…" style="margin-top:4px"></textarea>
+        </div>
+        <button class="mt-12" onclick="postGeneralNotice()">Post notice</button>
+        <div id="general-ok"></div>
+      </div>
+    </div>
+
+    <!-- NOTICE BOARD -->
+    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:12px;margin-top:28px">
+      <span style="font-size:15px;font-weight:700;color:var(--text)">Notice Board</span>
+      <span class="text-muted" id="notice-count">${noticeBoard.length} notices</span>
+    </div>
+    <div id="notice-board-list">
+      ${renderNoticeList()}
+    </div>`;
+}
+
+function switchNoticeTab(tab) {
+  document.querySelectorAll(".notice-tab").forEach((t, i) =>
+    t.classList.toggle("active", (i === 0 && tab === "avail") || (i === 1 && tab === "general")));
+  document.getElementById("form-avail").style.display   = tab === "avail"   ? "" : "none";
+  document.getElementById("form-general").style.display = tab === "general" ? "" : "none";
+}
+
+function postStaffNotice() {
+  const type = document.getElementById("staff-type").value;
+  const slot = document.getElementById("staff-slot").value.trim();
+  const info = document.getElementById("staff-info").value.trim();
+  const ok   = document.getElementById("avail-ok");
+
+  if (!slot) { ok.innerHTML = infoBanner("Please enter an available slot.", true); return; }
+
+  const now = new Date().toLocaleString("en-IN", { dateStyle:"medium", timeStyle:"short" });
+  noticeBoard.unshift({
+    type: "avail",
+    staffType: type,
+    slot,
+    info,
+    postedAt: now,
+    id: Date.now()
+  });
+
+  ok.innerHTML = `<div class="success-banner">Notice posted: ${type} available on ${slot}.</div>`;
+  document.getElementById("staff-slot").value = "";
+  document.getElementById("staff-info").value = "";
+  refreshNoticeBoard();
+}
+
+function postGeneralNotice() {
+  const msg = document.getElementById("gen-msg").value.trim();
+  const ok  = document.getElementById("general-ok");
+
+  if (!msg) { ok.innerHTML = infoBanner("Please enter a message.", true); return; }
+
+  const now = new Date().toLocaleString("en-IN", { dateStyle:"medium", timeStyle:"short" });
+  noticeBoard.unshift({
+    type: "general",
+    message: msg,
+    postedAt: now,
+    id: Date.now()
+  });
+
+  ok.innerHTML = `<div class="success-banner">General notice posted successfully.</div>`;
+  document.getElementById("gen-msg").value = "";
+  refreshNoticeBoard();
+}
+
+function deleteNotice(id) {
+  const idx = noticeBoard.findIndex(n => n.id === id);
+  if (idx !== -1) noticeBoard.splice(idx, 1);
+  refreshNoticeBoard();
+}
+
+function refreshNoticeBoard() {
+  document.getElementById("notice-board-list").innerHTML = renderNoticeList();
+  document.getElementById("notice-count").textContent = `${noticeBoard.length} notice${noticeBoard.length !== 1 ? "s" : ""}`;
+}
+
+function renderNoticeList() {
+  if (!noticeBoard.length) return infoBanner("No notices have been posted yet.");
+
+  return noticeBoard.map(n => {
+    if (n.type === "avail") {
+      return `
+        <div class="notice-item notice-avail">
+          <div class="notice-item-icon" style="background:var(--teal-dim);color:var(--teal-text)">${ICONS.tool}</div>
+          <div style="flex:1;min-width:0">
+            <div class="notice-item-title">${n.staffType} — Availability Notice</div>
+            <div class="notice-item-body">
+              <span style="color:var(--teal-text);font-weight:600">${n.slot}</span>
+              ${n.info ? `<span style="color:var(--text3)"> &nbsp;·&nbsp; ${n.info}</span>` : ""}
+            </div>
+            <div class="notice-item-meta">${ICONS.pin} ${n.postedAt}</div>
+          </div>
+          <button class="notice-del-btn" title="Delete notice" onclick="deleteNotice(${n.id})">${ICONS.trash}</button>
+        </div>`;
+    } else {
+      return `
+        <div class="notice-item notice-general">
+          <div class="notice-item-icon" style="background:var(--blue-dim);color:var(--blue-text)">${ICONS.bell}</div>
+          <div style="flex:1;min-width:0">
+            <div class="notice-item-title">General Notice</div>
+            <div class="notice-item-body">${n.message}</div>
+            <div class="notice-item-meta">${ICONS.pin} ${n.postedAt}</div>
+          </div>
+          <button class="notice-del-btn" title="Delete notice" onclick="deleteNotice(${n.id})">${ICONS.trash}</button>
+        </div>`;
+    }
+  }).join("");
+}
+
 /* ── BOOT ──────────────────────────────────────────────────── */
 
 initDashboard();
@@ -410,3 +626,4 @@ initStudents();
 initRooms();
 initFees();
 initComplaints();
+initNotices();
