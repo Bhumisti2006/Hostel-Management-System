@@ -4,16 +4,34 @@
 #include <vector>
 using namespace std;
 
-// ================== STUDENT CLASS ==================
-class Student {
-private:
-    string name, id, branch, email, contact, hostel, room, fee;
+// ================= BASE CLASS =================
+class User {
+protected:
+    string name;
+    int id;
 
 public:
-    // Constructor
-    Student(string n, string i, string b, string e, string c, string h, string r, string f) {
+    User(string n = "", int i = 0) {
         name = n;
         id = i;
+    }
+
+    virtual void display() {
+        cout << "User: " << name << endl;
+    }
+
+    int getID() { return id; }
+    string getName() { return name; }
+};
+
+// ================= DERIVED CLASS =================
+class Student : public User {
+private:
+    string branch, email, contact, hostel, room, fee;
+
+public:
+    Student(string n, int i, string b, string e, string c, string h, string r, string f)
+        : User(n, i) {
         branch = b;
         email = e;
         contact = c;
@@ -22,29 +40,45 @@ public:
         fee = f;
     }
 
-    Student() {}
-
-    string getName() { return name; }
-    string getID() { return id; }
     string getRoom() { return room; }
     string getFee() { return fee; }
 
-    void display() {
+    void display() override {
         cout << "\nName: " << name
-             << "\nScholar ID: " << id
+             << "\nID: " << id
              << "\nBranch: " << branch
              << "\nEmail: " << email
              << "\nContact: " << contact
              << "\nHostel: " << hostel
              << "\nRoom: " << room
-             << "\nFee Status: " << fee << endl;
+             << "\nFee: " << fee << endl;
     }
 };
 
-// ================== HOSTEL SYSTEM CLASS ==================
+// ================= COMPLAINT (POLYMORPHISM) =================
+class Complaint {
+public:
+    virtual void submit() = 0; // pure virtual
+};
+
+class ElectricityComplaint : public Complaint {
+public:
+    void submit() override {
+        cout << "Electricity complaint submitted\n";
+    }
+};
+
+class FoodComplaint : public Complaint {
+public:
+    void submit() override {
+        cout << "Food complaint submitted\n";
+    }
+};
+
+// ================= SYSTEM CLASS =================
 class HostelSystem {
 private:
-    vector<Student> students;
+    vector<Student> students; // HAS-A relationship
 
 public:
     // Load data from CSV
@@ -72,94 +106,76 @@ public:
             getline(ss, room, ',');
             getline(ss, fee, ',');
 
-            students.push_back(Student(name, id, branch, email, contact, hostel, room, fee));
+            students.push_back(Student(name, stoi(id), branch, email, contact, hostel, room, fee));
         }
 
         file.close();
     }
 
-    // Search by name
+    // View Student
     void viewStudent(string searchName) {
         for (auto &s : students) {
             if (s.getName() == searchName) {
-                s.display();
+                s.display(); // polymorphism
                 return;
             }
         }
         cout << "Student not found\n";
     }
 
-    // Fee status
-    void showFeeStatus(string searchID) {
+    // Fee Status
+    void showFee(int id) {
         for (auto &s : students) {
-            if (s.getID() == searchID) {
-                cout << "\nFee Status: " << s.getFee() << endl;
+            if (s.getID() == id) {
+                cout << "Fee Status: " << s.getFee() << endl;
                 return;
             }
         }
         cout << "Student not found\n";
     }
 
-    // Room details + roommates
-    void viewRoomDetails(string searchID) {
-        string roomNo = "";
-
-        for (auto &s : students) {
-            if (s.getID() == searchID) {
-                roomNo = s.getRoom();
-                cout << "\nRoom No: " << roomNo << endl;
-                break;
-            }
-        }
-
-        if (roomNo == "") {
-            cout << "Student not found\n";
-            return;
-        }
-
+    // Roommates
+    void showRoommates(string roomNo) {
         cout << "\nRoommates:\n";
         for (auto &s : students) {
             if (s.getRoom() == roomNo) {
-                cout << "Name: " << s.getName() << endl;
+                cout << s.getName() << endl;
             }
         }
     }
 
-    // Complaint system
-    void complaints() {
+    // Room Details
+    void viewRoom(int id) {
+        for (auto &s : students) {
+            if (s.getID() == id) {
+                cout << "Room: " << s.getRoom() << endl;
+                showRoommates(s.getRoom());
+                return;
+            }
+        }
+        cout << "Student not found\n";
+    }
+
+    // Complaint Section
+    void complaintMenu() {
         int ch;
-        cout << "\n--- Complaint Types ---\n";
-        cout << "1. Electricity\n2. Food\n3. Hygiene\n4. Water\n5. Washing Machine\n";
-        cout << "Enter choice: ";
+        cout << "\n1. Electricity\n2. Food\nChoice: ";
         cin >> ch;
 
-        switch (ch) {
-        case 1:
-            cout << "Electricity Complaint Link\n";
-            break;
-        case 2:
-            cout << "Food Complaint Link\n";
-            break;
-        case 3: {
-            int floor;
-            cout << "Enter Floor: ";
-            cin >> floor;
-            cout << "Cleaning Staff Contact: 9876543210\n";
-            break;
-        }
-        case 4:
-            cout << "Water Complaint Link\n";
-            break;
-        case 5:
-            cout << "Washing Machine Complaint Link\n";
-            break;
-        default:
-            cout << "Invalid choice\n";
-        }
+        Complaint* c;
+
+        if (ch == 1)
+            c = new ElectricityComplaint();
+        else
+            c = new FoodComplaint();
+
+        c->submit(); // polymorphism
+
+        delete c;
     }
 };
 
-// ================== MAIN ==================
+// ================= MAIN =================
 int main() {
     HostelSystem system;
     system.loadStudents();
@@ -167,11 +183,11 @@ int main() {
     int choice;
 
     do {
-        cout << "\n--- HOSTEL MANAGEMENT SYSTEM ---\n";
+        cout << "\n--- HOSTEL MANAGEMENT ---\n";
         cout << "1. View Student\n";
         cout << "2. Room Details\n";
         cout << "3. Fee Status\n";
-        cout << "4. Complaint Section\n";
+        cout << "4. Complaint\n";
         cout << "5. Exit\n";
         cout << "Enter choice: ";
         cin >> choice;
@@ -185,21 +201,21 @@ int main() {
             break;
         }
         case 2: {
-            string id;
-            cout << "Enter Scholar ID: ";
+            int id;
+            cout << "Enter ID: ";
             cin >> id;
-            system.viewRoomDetails(id);
+            system.viewRoom(id);
             break;
         }
         case 3: {
-            string id;
-            cout << "Enter Scholar ID: ";
+            int id;
+            cout << "Enter ID: ";
             cin >> id;
-            system.showFeeStatus(id);
+            system.showFee(id);
             break;
         }
         case 4:
-            system.complaints();
+            system.complaintMenu();
             break;
         case 5:
             cout << "Exiting...\n";
